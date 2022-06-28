@@ -3,9 +3,8 @@
 namespace Stickee\Laravel2fa\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Stickee\Laravel2fa\Rules\ValidCode;
 
-class AuthenticateRequest extends FormRequest
+class TwilioSendCodeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request
@@ -25,24 +24,13 @@ class AuthenticateRequest extends FormRequest
     public function rules()
     {
         return [
-            'laravel_2fa_code' => [
+            'mobile_number' => [
                 'required',
                 'string',
-                app(ValidCode::class)
+                // TODO: make sure valid mobile number
+                'min:11',
+                'max:11',
             ],
-        ];
-    }
-
-    /**
-     * Get the error messages for the defined validation rules.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [
-            'laravel_2fa_code.required' => 'An authentication code is required',
-            'laravel_2fa_code.string' => 'An authentication code is required',
         ];
     }
 }

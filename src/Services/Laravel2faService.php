@@ -2,13 +2,12 @@
 
 namespace Stickee\Laravel2fa\Services;
 
-use Exception;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Hash;
 use Stickee\Laravel2fa\Contracts\Driver;
 use Stickee\Laravel2fa\Contracts\RecoveryCodeGenerator;
 use Stickee\Laravel2fa\Contracts\StateStore;
-use Stickee\Laravel2fa\Drivers\Google;
+use Stickee\Laravel2fa\Exceptions\AuthenticationFailedToStartException;
 
 class Laravel2faService
 {
@@ -85,7 +84,7 @@ class Laravel2faService
      */
     public function needsToAuthenticate(): bool
     {
-        return $this->user->laravel2fa_enabled;
+        return $this->userDataManager->get2faModel()->enabled ?? false;
     }
 
     /**
@@ -222,9 +221,14 @@ class Laravel2faService
 
         foreach ($this->drivers as $driverName => $class) {
             if ($this->isEnabled($driverName)) {
-                $enabledDrivers[] = $driverName;
+                $enabledDrivers[$driverName] = ['started' => true];
 
-               $this->make($driverName)->startAuthentication();
+                try {
+                    $this->make($driverName)->startAuthentication();
+                } catch (AuthenticationFailedToStartException $e) {
+                    $enabledDrivers[$driverName]['started'] = false;
+                    $enabledDrivers[$driverName]['exception'] = $e->toArray();
+                }
             }
         }
 
@@ -238,9 +242,10 @@ class Laravel2faService
      */
     public function enable(string $driverName): void
     {
-        if (!$this->user->laravel2fa_enabled) {
-            $this->user->laravel2fa_enabled = true;
-            $this->user->save();
+        $laravel2fa = $this->userDataManager->getOrCreate2faModel();
+
+        if (!$laravel2fa->enabled) {
+            $laravel2fa->update(['enabled' => true]);
         }
 
         $enabled = $this->userDataManager->getValue('enabled', []);
@@ -274,7 +279,7 @@ class Laravel2faService
      *
      * @return bool
      */
-    private function isEnabled(string $driverName): bool
+    public function isEnabled(string $driverName): bool
     {
         $enabled = $this->userDataManager->getValue('enabled', []);
 

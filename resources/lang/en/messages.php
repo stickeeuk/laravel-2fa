@@ -4,7 +4,7 @@ return [
     'cancel' => 'Cancel',
     'confirm' => 'Confirm',
     'register' => [
-        'heading' => 'Regsiter for Two Factor Authentication',
+        'heading' => 'Register for Two Factor Authentication',
         'intro' => 'Two factor authentication (2FA) strengthens access security by requiring two methods
             (also referred to as factors) to verify your identity.
             Two factor authentication protects against phishing, social engineering and password brute force attacks
@@ -20,5 +20,9 @@ return [
         'intro' => 'Enter the pin from Google Authenticator 2FA or a recovery code.',
         'code' => 'One Time Password / Recovery Code',
         'submit' => 'Authenticate',
+        'cooldown' => [
+            'message' => 'We can only send an activation code every [cooldown_value] [cooldown_measurement].
+                Please wait another [available_at_value] [available_at_measurement] before trying again.',
+        ],
     ],
 ];

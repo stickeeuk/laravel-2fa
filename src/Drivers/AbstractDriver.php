@@ -3,7 +3,6 @@
 namespace Stickee\Laravel2fa\Drivers;
 
 use Closure;
-use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Route;
 use Stickee\Laravel2fa\Contracts\Driver;
 use Stickee\Laravel2fa\Contracts\UserDataManager;
@@ -69,8 +68,9 @@ abstract class AbstractDriver implements Driver
     protected static function registerRoutes(string $name, Closure $function)
     {
         Route::middleware(config('laravel-2fa.routes_middleware'))
-            ->prefix(config('laravel-2fa.routes_prefix') . '/' . $name)
             ->as('laravel-2fa.' . $name . '.')
             ->group($function);
     }
+
+
 }

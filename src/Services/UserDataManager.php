@@ -4,6 +4,7 @@ namespace Stickee\Laravel2fa\Services;
 
 use Illuminate\Foundation\Auth\User;
 use Stickee\Laravel2fa\Contracts\UserDataManager as UserDataManagerInterface;
+use Stickee\Laravel2fa\Models\Laravel2fa;
 
 class UserDataManager implements UserDataManagerInterface
 {
@@ -15,6 +16,13 @@ class UserDataManager implements UserDataManagerInterface
     private $user;
 
     /**
+     * The Laravel2fa instance
+     *
+     * @var \Stickee\Laravel2fa\Models\Laravel2fa $laravel2fa The Laravel2fa instance
+     */
+    private $laravel2fa;
+
+    /**
      * Constructor
      *
      * @param \Illuminate\Foundation\Auth\User $user The user
@@ -22,6 +30,34 @@ class UserDataManager implements UserDataManagerInterface
     public function __construct(User $user)
     {
         $this->user = $user;
+
+        $this->laravel2fa = Laravel2fa::where('user_type', $user->getMorphClass())
+            ->where('user_id', $user->getKey())
+            ->first();
+    }
+
+    /**
+     * Get the user's laravel 2fa instance
+     *
+     * @return null|Stickee\Laravel2fa\Models\Laravel2fa
+     */
+    public function get2faModel(): ?Laravel2fa
+    {
+        return $this->laravel2fa;
+    }
+
+    /**
+     * Get the user's laravel 2fa instance or create a new one
+     *
+     * @return Stickee\Laravel2fa\Models\Laravel2fa
+     */
+    public function getOrCreate2faModel(): Laravel2fa
+    {
+        if (!$this->laravel2fa) {
+            $this->laravel2fa = Laravel2fa::createByModel($this->user);
+        }
+
+        return $this->laravel2fa;
     }
 
     /**
@@ -31,11 +67,11 @@ class UserDataManager implements UserDataManagerInterface
      */
     public function get(): array
     {
-        if (empty($this->user->laravel2fa_data)) {
+        if (empty($this->laravel2fa->data)) {
             return [];
         }
 
-        return json_decode(decrypt($this->user->laravel2fa_data), true);
+        return $this->laravel2fa->data;
     }
 
     /**
@@ -45,8 +81,11 @@ class UserDataManager implements UserDataManagerInterface
      */
     public function set(array $data): void
     {
-        $this->user->laravel2fa_data = encrypt(json_encode($data));
-        $this->user->save();
+        if (!$this->laravel2fa) {
+            $this->laravel2fa = Laravel2fa::createByModel($this->user);
+        }
+
+        $this->laravel2fa->update(['data' => $data]);
     }
 
     /**
@@ -59,9 +98,7 @@ class UserDataManager implements UserDataManagerInterface
      */
     public function getValue($key, $default = null)
     {
-        $data = $this->get();
-
-        return array_key_exists($key, $data) ? $data[$key] : $default;
+        return $this->get()[$key] ?? $default;
     }
 
     /**

@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use Stickee\Laravel2fa\Commands\Reauthenticate;
-use Stickee\Laravel2fa\Contracts\Driver;
 use Stickee\Laravel2fa\Contracts\QrCodeGenerator;
 use Stickee\Laravel2fa\Contracts\RecoveryCodeGenerator as RecoveryCodeGeneratorInterface;
 use Stickee\Laravel2fa\Contracts\StateStore;
@@ -33,18 +32,6 @@ class ServiceProvider extends BaseServiceProvider
             __DIR__ . '/../config/laravel-2fa.php', 'laravel-2fa'
         );
 
-        $this->app->when(Laravel2faService::class)
-            ->needs(User::class)
-            ->give(function () {
-                return Auth::user();
-            });
-
-        $this->app->when(UserDataManager::class)
-            ->needs(User::class)
-            ->give(function () {
-                return Auth::user();
-            });
-
         $this->app->bind(StateStore::class, config('laravel-2fa.state_store'));
         $this->app->bind(ImageBackEndInterface::class, config('laravel-2fa.qr_code_generator'));
         $this->app->bind(QrCodeGenerator::class, BaconQrCodeGenerator::class);
@@ -64,8 +51,8 @@ class ServiceProvider extends BaseServiceProvider
 
         $this->app['router']->aliasMiddleware('laravel-2fa', Laravel2fa::class);
 
-        foreach (config('laravel-2fa.middleware_groups') as $group) {
-            $this->app['router']->pushMiddlewareToGroup($group, Laravel2fa::class);
+        foreach (config('laravel-2fa.middleware_groups') as $group => $middleware) {
+            $this->app['router']->pushMiddlewareToGroup($group, $middleware);
         }
 
         $this->registerRoutes();
@@ -110,7 +97,6 @@ class ServiceProvider extends BaseServiceProvider
         }
 
         Route::middleware(config('laravel-2fa.routes_middleware'))
-            ->prefix(config('laravel-2fa.routes_prefix'))
             ->as('laravel-2fa.')
             ->group(__DIR__ . '/../routes/routes.php');
     }

@@ -3,6 +3,7 @@
 namespace Stickee\Laravel2fa\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
+use Stickee\Laravel2fa\Exceptions\AuthenticationLockException;
 use Stickee\Laravel2fa\Services\Laravel2faService;
 
 class ValidCode implements Rule
@@ -20,6 +21,13 @@ class ValidCode implements Rule
      * @var null|string
      */
     private $driver;
+
+    /**
+     * The message to display to the user for an invalid code.
+     *
+     * @var string
+     */
+    private $message = 'The code was not valid';
 
     /**
      * Constructor
@@ -43,7 +51,12 @@ class ValidCode implements Rule
      */
     public function passes($attribute, $value)
     {
-        return $this->laravel2faService->verify($value, $this->driver);
+        try {
+            return $this->laravel2faService->verify($value, $this->driver);
+        } catch (AuthenticationLockException $e) {
+            $this->message = $e->getMessage();
+            return false;
+        }
     }
 
     /**
@@ -53,6 +66,6 @@ class ValidCode implements Rule
      */
     public function message()
     {
-        return 'The code was not correct';
+        return $this->message;
     }
 }

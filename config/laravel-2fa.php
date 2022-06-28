@@ -14,16 +14,6 @@ return [
 
     /*
      |--------------------------------------------------------------------------
-     | User class
-     |--------------------------------------------------------------------------
-     |
-     | The user model class
-     |
-     */
-    'user_class' => \App\User::class,
-
-    /*
-     |--------------------------------------------------------------------------
      | Required
      |--------------------------------------------------------------------------
      |
@@ -31,6 +21,13 @@ return [
      |
      */
     'required' => env('LARAVEL_2FA_REQUIRED', false),
+
+    'guards' => [
+        'web' => [
+            'routes_prefix' => '/2fa',
+            'routes_middleware' => ['web', 'laravel-2fa:web'],
+        ],
+    ],
 
     /*
      |--------------------------------------------------------------------------
@@ -41,7 +38,7 @@ return [
      | It will always only apply to authenticated users
      |
      */
-    'middleware_groups' => ['web', 'nova'],
+    'middleware_groups' => ['web' => 'laravel-2fa:web', 'nova' => 'laravel-2fa:web'],
 
     /*
      |--------------------------------------------------------------------------
@@ -51,17 +48,7 @@ return [
      | Middleware to apply to routes used by the 2FA system (e.g. /2fa/register)
      |
      */
-    'routes_middleware' => ['web'],
-
-    /*
-     |--------------------------------------------------------------------------
-     | Routes prefix
-     |--------------------------------------------------------------------------
-     |
-     | Prefix for routes used by the 2fa system
-     |
-     */
-    'routes_prefix' => '2fa',
+    'routes_middleware' => ['web', 'auth:web'],
 
     /*
      |--------------------------------------------------------------------------
@@ -95,6 +82,7 @@ return [
      */
     'drivers' => [
         'google' => \Stickee\Laravel2fa\Drivers\Google::class,
+        'twilio' => \Stickee\Laravel2fa\Drivers\Twilio::class,
     ],
 
     /*
@@ -205,4 +193,34 @@ return [
      |
      */
     'username_attribute' => 'email',
+
+    /*
+     |--------------------------------------------------------------------------
+     | Google 2FA specific values
+     |--------------------------------------------------------------------------
+     |
+     | Any specific values relating to Google 2FA
+     |
+     */
+    'google' => [
+        'guards' => ['web'],
+    ],
+
+    /*
+     |--------------------------------------------------------------------------
+     | Twilio 2FA specific values
+     |--------------------------------------------------------------------------
+     |
+     | Any specific values relating to Twilio 2FA
+     |
+     */
+    'twilio' => [
+        'guards' => ['web'],
+        'from' => env('LARAVEL_2FA_TWILIO_FROM'),
+        'sid' => env('LARAVEL_2FA_TWILIO_SID'),
+        'token' => env('LARAVEL_2FA_TWILIO_TOKEN'),
+        'message' => 'Here\'s your authentication code: [code]',
+        'cooldown_in_minutes' => 10,
+    ],
+
 ];

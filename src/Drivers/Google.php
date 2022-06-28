@@ -57,9 +57,11 @@ class Google extends AbstractDriver
 
     public static function boot(string $name)
     {
-        self::registerRoutes($name, function () {
-            Route::get('register', GoogleController::class . '@register')->name('register');
-            Route::post('confirm', GoogleController::class . '@confirm')->name('confirm');
+        $guards = implode(', ', config('laravel-2fa.google.guards') ?? ['web']);
+
+        self::registerRoutes($name, function () use ($guards) {
+            Route::middleware("auth:$guards")->get('register', GoogleController::class . '@register')->name('register');
+            Route::middleware("auth:$guards")->post('confirm', GoogleController::class . '@confirm')->name('confirm');
         });
     }
 
